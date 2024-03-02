@@ -2,7 +2,7 @@
 
 ## Installation instructions:
 
-1 Create .env file with environment variables:
+1 Create .env file with environment variables
 
 
 2 Run container:
