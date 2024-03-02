@@ -1,5 +1,3 @@
-# Backend:
-
 ## Installation instructions:
 
 1 Create .env file with environment variables
