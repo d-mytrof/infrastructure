@@ -1,0 +1,60 @@
+version: '3'
+services:
+    
+    
+  traefik:
+    container_name: ${CONTAINER_NAME}_traefik
+    image: traefik:v3.0
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - web
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+    command:
+      - --log.level=${TRAEFIK_LOG_LEVEL}
+      - --entrypoints.http.address=:80
+      - --entrypoints.https.address=:443
+      - --providers.docker=true
+      - --api=true
+      # - --certificatesResolvers.letsencrypt.acme.caServer=
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=http
+      - --certificatesresolvers.letsencrypt.acme.email=${DEFAULT_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+    labels:
+      - traefik.http.routers.to-https.rule=HostRegexp(`{host:.+}`)
+      - traefik.http.routers.to-https.entrypoints=http
+      - traefik.http.routers.to-https.middlewares=to-https
+      - traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DOMAIN}`)
+      - traefik.http.routers.traefik.entrypoints=https
+      - traefik.http.routers.traefik.middlewares=auth
+      - traefik.http.routers.traefik.service=api@internal
+      - traefik.http.routers.traefik.tls=true
+      - traefik.http.routers.traefik.tls.certresolver=${TRAEFIK_CERT_RESOLVER}
+      - traefik.http.middlewares.to-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_USER}:${TRAEFIK_PASSWORD_HASH}
+
+    
+  adminer:
+    container_name: ${CONTAINER_NAME}_adminer
+    image: adminer:latest
+    ports:
+      - "${HOST_ADMINER_PORT}:8080"
+    networks:
+      - web
+    
+      
+networks:
+  web:
+    external: true
+    
+volumes:
+  letsencrypt:
+    name: letsencrypt
+      
+#docker network create --driver bridge web
+
